@@ -164,7 +164,7 @@ class MaskTestDataset(data.Dataset):
 
     def __getitem__(self, index):
 
-        img = img_as_float(imread('../data/test/images/' + self.img_ids[index]))[:,:,:3]
+        img = img_as_float(imread('../tgs/test/images/' + self.img_ids[index]))[:,:,:3]
         # scale up image to 202 or keep at 101, reflect pad to get network sizes
         if self.imsize == 256:
             img = resize(img, (202, 202), preserve_range=True, mode='reflect')
@@ -187,7 +187,7 @@ class MaskTestDataset(data.Dataset):
         out_dict = {'img': img_tch,
                     'img_lr': img_lr_tch,
                     'id': self.img_ids[index].replace('.png', ''),
-                    'blank': torch.tensor(os.stat('../data/test/images/' + self.img_ids[index]).st_size != 107)}
+                    'blank': torch.tensor(os.stat('../tgs/test/images/' + self.img_ids[index]).st_size != 107)}
 
         return out_dict
 
@@ -197,29 +197,29 @@ class MaskTestDataset(data.Dataset):
 
 def get_data_loaders(imsize=128, batch_size=16, num_folds=5, fold=0):
     '''sets up the torch data loaders for training'''
-    img_ids = [os.path.basename(x) for x in glob.glob('../data/train/images/*.png')]
+    img_ids = [os.path.basename(x) for x in glob.glob('../tgs/train/images/*.png')]
     kf = KFold(n_splits=num_folds, shuffle=True)
 
     img_idx = list(range(len(img_ids)))
     splits = list(kf.split(img_idx))
     train_idx, valid_idx = splits[fold]
 
-    small_msk_ids = list(set([os.path.basename(x) for x in glob.glob('../data/train/small_masks/images/*.png')]) & 
-                         set([img_ids[idx] for idx in train_idx]))
+#     small_msk_ids = list(set([os.path.basename(x) for x in glob.glob('../tgs/train/small_masks/images/*.png')]) & 
+#                          set([img_ids[idx] for idx in train_idx]))
 
-    print('Supersampling {} small masks'.format(len(small_msk_ids)))
+#     print('Supersampling {} small masks'.format(len(small_msk_ids)))
 
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)  
+#     train_sampler = SubsetRandomSampler(train_idx)
+#     valid_sampler = SubsetRandomSampler(valid_idx)  
 
     # set up the datasets
     train_dataset = MaskDataset(imsize=imsize, img_ids=img_ids,
-                                  img_paths='../data/train/images/',
-                                  mask_paths='../data/train/masks/',
+                                  img_paths='../tgs/train/images/',
+                                  mask_paths='../tgs/train/masks/',
                                   small_msk_ids=small_msk_ids)
     valid_dataset = MaskDataset(imsize=imsize, img_ids=img_ids,
-                                  img_paths='../data/train/images/',
-                                  mask_paths='../data/train/masks/',
+                                  img_paths='../tgs/train/images/',
+                                  mask_paths='../tgs/train/masks/',
                                   valid=True)
 
     # set up the data loaders
@@ -241,7 +241,7 @@ def get_data_loaders(imsize=128, batch_size=16, num_folds=5, fold=0):
 
 def get_data_mt_loaders(imsize=128, batch_size=16, num_folds=5, fold=0, unlabeled_ratio=0.5):
     '''sets up the torch data loaders for training'''
-    img_ids = [os.path.basename(x) for x in glob.glob('../data/train/images/*.png')]
+    img_ids = [os.path.basename(x) for x in glob.glob('../tgs/train/images/*.png')]
     kf = KFold(n_splits=num_folds, shuffle=True)
 
     img_idx = list(range(len(img_ids)))
@@ -251,19 +251,19 @@ def get_data_mt_loaders(imsize=128, batch_size=16, num_folds=5, fold=0, unlabele
     train_sampler = SubsetRandomSampler(train_idx)
     valid_sampler = SubsetRandomSampler(valid_idx)  
 
-    unlabeled_ids = [os.path.basename(x) for x in glob.glob('../data/test/images/*.png')]
+    unlabeled_ids = [os.path.basename(x) for x in glob.glob('../tgs/test/images/*.png')]
     
     # set up the datasets
     train_dataset = MaskDataset_MT(imsize=imsize, labeled_ids=img_ids,
                                    unlabeled_ids=unlabeled_ids,
                                    unlabeled_ratio=unlabeled_ratio,
-                                   labeled_img_paths='../data/train/images/',
-                                   unlabeled_img_paths='../data/test/images/',
+                                   labeled_img_paths='../tgs/train/images/',
+                                   unlabeled_img_paths='../tgs/test/images/',
                                    mask_paths='../data/train/masks/')
 
     valid_dataset = MaskDataset(imsize=imsize, img_ids=img_ids,
-                                  img_paths='../data/train/images/',
-                                  mask_paths='../data/train/masks/',
+                                  img_paths='../tgs/train/images/',
+                                  mask_paths='../tgs/train/masks/',
                                   valid=True)
 
     # set up the data loaders
@@ -287,12 +287,12 @@ def get_data_mt_loaders(imsize=128, batch_size=16, num_folds=5, fold=0, unlabele
 
 def get_test_loader(imsize=128, batch_size=16):
     '''sets up the torch data loaders for training'''
-    img_ids = [os.path.basename(x) for x in glob.glob('../data/test/images/*.png')]
+    img_ids = [os.path.basename(x) for x in glob.glob('../tgs/test/images/*.png')]
     print('Found {} test images'.format(len(img_ids)))
 
     # set up the datasets
     test_dataset = MaskTestDataset(imsize=imsize, img_ids=img_ids,
-                                   img_paths='../data/test/images/')
+                                   img_paths='../tgs/test/images/')
 
     # set up the data loaders
     test_loader = data.DataLoader(test_dataset,
